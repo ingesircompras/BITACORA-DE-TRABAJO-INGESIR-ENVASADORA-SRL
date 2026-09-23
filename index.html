@@ -396,17 +396,22 @@ async function vincular(){
   const pin = $('ovPin').value.trim(), err = t => $('ovErr').textContent = t;
   if(!/^\d{4,6}$/.test(pin)){ err('El PIN son 4 números.'); $('ovPin').focus(); return; }
   const b = $('ovEntrar'); b.disabled = true; b.textContent = 'Verificando…'; err('');
+  const lento = setTimeout(() => { b.textContent = 'Conectando con la planilla…'; }, 3500);
+  const ctrl = new AbortController(), corte = setTimeout(() => ctrl.abort(), 30000);
   try{
-    const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    const r = await fetch(API_URL, {method:'POST', signal: ctrl.signal, headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({accion:'vincular', nombre: ovNombre, pin, dispositivo: descripcionPC(), tokenAnterior: SES?.token || ''})});
     const j = await leerJSON(r);
     guardarSesion({token: j.token, nombre: j.nombre});
-    soloVer = false; avisosVistos = null; DATA = j; guardarCache(j);
-    cerrarBienvenida(); $('ovPin').value = ''; pintar();
+    soloVer = false; avisosVistos = null;
+    cerrarBienvenida(); $('ovPin').value = ''; if(DATA) pintar(); cargar(true);
     toast('¡Listo, ' + j.nombre.split(' ')[0] + '!', 'Esta PC quedó vinculada a vos.');
     try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(e){}
-  }catch(e){ err(e.message); $('ovPin').select(); }
-  finally{ b.disabled = false; b.textContent = 'Entrar'; }
+  }catch(e){
+    err(e.name === 'AbortError' ? 'La planilla no respondió. Revisá tu conexión y probá de nuevo.' : e.message);
+    $('ovPin').select();
+  }
+  finally{ clearTimeout(lento); clearTimeout(corte); b.disabled = false; b.textContent = 'Entrar'; }
 }
 function miSector(){ return DATA?.equipo.find(p => p.nombre === yo())?.sector || ''; }
 function esParaMi(a){
