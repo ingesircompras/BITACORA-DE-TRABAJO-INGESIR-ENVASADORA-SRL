@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -92,7 +93,7 @@
   .row .e{word-break:break-word}
   @media (max-width:560px){ .row{grid-template-columns:48px 1fr} .row .e{grid-column:2} }
   .empty{padding:18px 14px;color:var(--muted);font-size:14px}
-  .loading{padding:40px;text-align:center;color:var(--muted)}
+  .loading{padding:40px;text-align:center;color:var(--muted);grid-column:1/-1}
 
   /* ---- Avisos ---- */
   aside{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:4px}
@@ -199,24 +200,49 @@ function hace(iso){
   return {txt: txt.trim() + ' · ' + hhmm(d), warn: horas >= (DATA?.horasAlerta || 3)};
 }
 
+/* Lee la respuesta de Apps Script y explica el problema si no es JSON */
+async function leerJSON(r){
+  const txt = await r.text();
+  if(txt.trim().startsWith('{')){
+    const j = JSON.parse(txt);
+    if(!j.ok) throw new Error(j.error);
+    return j;
+  }
+  if(/accounts\.google|ServiceLogin|Iniciar sesi|Sign in/i.test(txt))
+    throw new Error('Apps Script pide iniciar sesión. En "Gestionar implementaciones", "Quién tiene acceso" tiene que ser "Cualquier usuario".');
+  if(/doGet|doPost|Script function not found|No se ha encontrado la función/i.test(txt))
+    throw new Error('Apps Script no encuentra doGet/doPost. Pegá el Code.gs completo, guardá y publicá una "Nueva versión".');
+  if(r.status === 404)
+    throw new Error('La URL de Apps Script no existe (404). Revisá la línea 10 de index.html: tiene que terminar en /exec.');
+  throw new Error('La URL no devolvió datos. Revisá que en la línea 10 de index.html esté la URL que termina en /exec, publicada para "Cualquier usuario".');
+}
+
 async function post(body){
   const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error);
+  const j = await leerJSON(r);
+  guardarCache(j);
   return j;
 }
 
+function guardarCache(j){ try{ localStorage.setItem('tablero_cache', JSON.stringify(j)); }catch(e){} }
+function leerCache(){ try{ return JSON.parse(localStorage.getItem('tablero_cache') || 'null'); }catch(e){ return null; } }
+
 async function cargar(silencioso){
+  if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(API_URL)){
+    $('sync').textContent = 'Sin configurar';
+    $('grid').innerHTML = `<div class="loading">Falta pegar la URL de Apps Script en la línea 10 de index.html.<br><small>Es la que termina en /exec (Implementar → Gestionar implementaciones).</small></div>`;
+    return;
+  }
   if(!silencioso) $('sync').textContent = 'Sincronizando…';
   try{
     const r = await fetch(API_URL + '?t=' + Date.now());
-    const j = await r.json();
-    if(!j.ok) throw new Error(j.error);
-    DATA = j; pintar();
+    const j = await leerJSON(r);
+    DATA = j; guardarCache(j); pintar();
     $('sync').textContent = 'Actualizado ' + hhmm(new Date());
   }catch(e){
     $('sync').textContent = 'Sin conexión';
     if(!DATA) $('grid').innerHTML = `<div class="loading">No se pudo conectar con la planilla.<br><small>${esc(e.message)}</small></div>`;
+    else if(!silencioso) toast('No se pudo actualizar', e.message);
   }
 }
 
@@ -424,7 +450,9 @@ $('grid').onclick = e => {
   $('hLog').scrollIntoView({behavior:'smooth'});
 };
 
-cargar();
+const cache = leerCache();
+if(cache){ DATA = cache; pintar(); $('sync').textContent = 'Sincronizando…'; }
+cargar(!!cache);
 setInterval(() => { if(!document.hidden) cargar(true); }, 60000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) cargar(true); });
 </script>
