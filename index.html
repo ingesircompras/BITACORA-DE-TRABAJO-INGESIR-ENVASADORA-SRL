@@ -119,6 +119,37 @@
 
   .toast{position:fixed;right:18px;bottom:18px;max-width:340px;background:var(--note-bg);color:var(--note-text);border:2px solid var(--note-mine);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:50;cursor:pointer;animation:entra .25s ease-out}
   .toast small{display:block;color:var(--note-muted);margin-bottom:2px}
+
+  /* ---- Mi usuario ---- */
+  .yo{display:flex;align-items:center;gap:10px;min-height:40px}
+  .yo .av{width:36px;height:36px;font-size:13px}
+  .yo-t{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+  .yo-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  button.link{background:none;border:0;padding:0;color:var(--accent);font-size:12px;text-align:left;cursor:pointer}
+  button.link:hover{text-decoration:underline}
+  .card.me{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tag-vos{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--cyan);color:#062630;border-radius:4px;padding:1px 7px;vertical-align:2px}
+
+  /* ---- Bienvenida / vincular PC ---- */
+  .ov{position:fixed;inset:0;z-index:100;background:rgba(6,8,11,.78);backdrop-filter:blur(6px);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}
+  .ov-card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--cyan);border-radius:16px;width:100%;max-width:640px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:entra .25s ease-out}
+  .ov-card h2{margin:0 0 6px;font-size:22px}
+  .ov-sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+  .ov-names{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+  .ov-name{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;background:var(--bg)}
+  .ov-name:hover{border-color:var(--accent)}
+  .ov-name .av{width:36px;height:36px;font-size:13px}
+  .ov-name small{display:block;color:var(--muted);font-size:11px}
+  .ov-who{display:flex;align-items:center;gap:12px;margin:14px 0 18px}
+  .ov-who .av{width:52px;height:52px;font-size:18px}
+  .ov-who b{font-size:18px;display:block}
+  .ov-lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  #ovPin{font:inherit;font-size:26px;letter-spacing:.5em;text-align:center;width:100%;max-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+  #ovPin:focus{outline:2px solid var(--accent)}
+  #ovEntrar{display:block;margin-top:6px;min-width:220px;padding:11px}
+  .ov-help{font-size:12px;color:var(--muted);margin:12px 0 0}
+  .ov-foot{display:flex;justify-content:space-between;margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+  .ov-foot .link{color:var(--muted)}
   @keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
@@ -135,7 +166,7 @@
   <main>
   <section class="panel">
     <div class="form">
-      <select id="selNombre" aria-label="Tu nombre"><option value="">¿Quién sos?</option></select>
+      <div class="yo" id="yoBox"></div>
       <div class="seg" id="segModo">
         <button type="button" data-v="Presencial" class="on">Presencial</button>
         <button type="button" data-v="Remoto">Remoto</button>
@@ -177,11 +208,39 @@
 </div>
 <div id="toastBox"></div>
 
+<div class="ov" id="ov" hidden>
+  <div class="ov-card" role="dialog" aria-labelledby="ovTit">
+    <div id="ovPaso1">
+      <h2 id="ovTit">¡Hola! ¿Quién sos?</h2>
+      <p class="ov-sub" id="ovNota">Elegí tu nombre. Esta PC va a quedar vinculada a vos y no vas a tener que elegirlo de nuevo.</p>
+      <div class="ov-names" id="ovNames"><div class="loading">Cargando equipo…</div></div>
+    </div>
+    <div id="ovPaso2" hidden>
+      <button class="link" id="ovVolver">← Elegir otro nombre</button>
+      <div class="ov-who" id="ovWho"></div>
+      <label for="ovPin" class="ov-lbl">Ingresá tu PIN</label>
+      <input id="ovPin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••">
+      <div class="msg err" id="ovErr"></div>
+      <button class="primary" id="ovEntrar">Entrar</button>
+      <p class="ov-help">¿No tenés PIN? Pedíselo a quien administra el tablero.</p>
+    </div>
+    <div class="ov-foot">
+      <button class="link" id="ovCancelar" hidden>Cancelar</button>
+      <button class="link" id="ovSoloVer">Solo quiero mirar el tablero</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const COLORES = [
   ['#e7eefc','#2f5fd0'],['#e4f4ea','#1f7a4d'],['#fdeee6','#b4471c'],['#efeafc','#6a4bc4'],
   ['#fbe8f0','#a3305f'],['#e2f4f6','#0f6f7c'],['#fdf2dc','#8a5a00'],['#eef0f3','#4a5260']
 ];
+/* ---- Sesión: esta PC vinculada a una persona ---- */
+function leerSesion(){ try{ return JSON.parse(localStorage.getItem('tablero_sesion') || 'null'); }catch(e){ return null; } }
+function guardarSesion(v){ SES = v; try{ v ? localStorage.setItem('tablero_sesion', JSON.stringify(v)) : localStorage.removeItem('tablero_sesion'); }catch(e){} }
+let SES = leerSesion(), soloVer = false, ovNombre = '';
+
 let enCurso = 0; /* guardados pendientes: mientras haya, el refresco automático no pisa la pantalla */
 let DATA = null, filtroSector = '', modo = 'Presencial', filtroAvisos = 'mios', avisosVistos = null;
 const $ = id => document.getElementById(id);
@@ -207,7 +266,7 @@ async function leerJSON(r){
   const txt = await r.text();
   if(txt.trim().startsWith('{')){
     const j = JSON.parse(txt);
-    if(!j.ok) throw new Error(j.error);
+    if(!j.ok){ const e = new Error(j.error); e.sesion = !!j.sesionInvalida; throw e; }
     return j;
   }
   if(/accounts\.google|ServiceLogin|Iniciar sesi|Sign in/i.test(txt))
@@ -220,10 +279,15 @@ async function leerJSON(r){
 }
 
 async function post(body){
-  const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
-  const j = await leerJSON(r);
-  guardarCache(j);
-  return j;
+  const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({...body, token: SES?.token || ''})});
+  try{
+    const j = await leerJSON(r);
+    if(j.equipo) guardarCache(j);
+    return j;
+  }catch(e){
+    if(e.sesion){ guardarSesion(null); abrirBienvenida('Esta PC ya no está vinculada. Elegí tu nombre y poné tu PIN para volver a entrar.'); }
+    throw e;
+  }
 }
 
 function guardarCache(j){ try{ localStorage.setItem('tablero_cache', JSON.stringify(j)); }catch(e){} }
@@ -237,9 +301,12 @@ async function cargar(silencioso){
   }
   if(!silencioso) $('sync').textContent = 'Sincronizando…';
   try{
-    const r = await fetch(API_URL + '?t=' + Date.now());
+    const r = await fetch(API_URL + '?t=' + Date.now() + (SES ? '&token=' + encodeURIComponent(SES.token) : ''));
     const j = await leerJSON(r);
-    guardarCache(j); if(enCurso) return; DATA = j; pintar();
+    guardarCache(j);
+    if(SES && j.sesionValida === false){ guardarSesion(null); abrirBienvenida('Esta PC fue desvinculada. Elegí tu nombre y poné tu PIN para volver a entrar.'); }
+    else if(SES && j.yo && j.yo !== SES.nombre) guardarSesion({...SES, nombre: j.yo});
+    if(enCurso) return; DATA = j; pintar();
     $('sync').textContent = 'Actualizado ' + hhmm(new Date());
   }catch(e){
     $('sync').textContent = 'Sin conexión';
@@ -251,9 +318,8 @@ async function cargar(silencioso){
 function pintar(){
   document.title = DATA.titulo; $('titulo').textContent = DATA.titulo;
 
-  const sel = $('selNombre'), guardado = sel.value || store('tablero_nombre') || '';
-  sel.innerHTML = '<option value="">¿Quién sos?</option>' +
-    DATA.equipo.map(p => `<option ${p.nombre===guardado?'selected':''}>${esc(p.nombre)}</option>`).join('');
+  pintarYo();
+  pintarBienvenida();
   const selLog = $('selLogPersona'), logSel = selLog.value;
   selLog.innerHTML = '<option value="">Todos</option>' +
     DATA.equipo.map(p => `<option ${p.nombre===logSel?'selected':''}>${esc(p.nombre)}</option>`).join('');
@@ -264,16 +330,18 @@ function pintar(){
     ? ['', ...sectores].map(s => `<button class="chip ${s===filtroSector?'on':''}" data-s="${esc(s)}">${s ? esc(s) : 'Todos'}</button>`).join('')
     : '';
 
-  const lista = DATA.equipo.filter(p => !filtroSector || p.sector === filtroSector);
+  const lista = DATA.equipo.filter(p => !filtroSector || p.sector === filtroSector)
+    .sort((a,b) => (b.nombre === yo()) - (a.nombre === yo()));
   $('grid').innerHTML = lista.map(p => {
     const [bg, fg] = colorSector(p.sector), h = hace(p.actualizado);
-    return `<div class="card ${h.warn?'stale':''}" data-n="${esc(p.nombre)}">
+    const soyYo = p.nombre === yo();
+    return `<div class="card ${h.warn && !soyYo ?'stale':''} ${soyYo?'me':''}" data-n="${esc(p.nombre)}">
       <div class="top">
         <div class="av" style="background:${bg};color:${fg}">${esc(iniciales(p.nombre))}</div>
-        <div class="who"><b>${esc(p.nombre)}</b><div class="sub"><span>${esc(p.sector)}</span>${p.modalidad ? `<span class="pill ${esc(p.modalidad)}">${esc(p.modalidad)}</span>` : ''}</div></div>
+        <div class="who"><b>${esc(p.nombre)} ${soyYo ? '<span class="tag-vos">Vos</span>' : ''}</b><div class="sub"><span>${esc(p.sector)}</span>${p.modalidad ? `<span class="pill ${esc(p.modalidad)}">${esc(p.modalidad)}</span>` : ''}</div></div>
       </div>
       <div class="estado ${p.estado?'':'vacio'}">${p.estado ? esc(p.estado) : 'Sin estado cargado'}</div>
-      <div class="foot"><div class="when ${h.warn?'warn':''}">${esc(h.txt)}</div>${p.nombre !== $('selNombre').value ? '<button class="mini" data-aviso title="Dejarle un aviso">+ Aviso</button>' : ''}</div>
+      <div class="foot"><div class="when ${h.warn?'warn':''}">${esc(h.txt)}</div>${!soyYo ? '<button class="mini" data-aviso title="Dejarle un aviso">+ Aviso</button>' : ''}</div>
     </div>`;
   }).join('') || '<div class="empty">No hay personas en este sector.</div>';
 
@@ -283,7 +351,63 @@ function pintar(){
 }
 
 /* ---------------- Avisos ---------------- */
-function yo(){ return $('selNombre').value; }
+function yo(){ return SES?.nombre || ''; }
+
+function avatar(nombre, sector){
+  const [bg, fg] = colorSector(sector || '');
+  return `<div class="av" style="background:${bg};color:${fg}">${esc(iniciales(nombre))}</div>`;
+}
+function pintarYo(){
+  const b = $('yoBox');
+  if(SES){
+    const p = DATA?.equipo.find(x => x.nombre === SES.nombre);
+    b.innerHTML = avatar(SES.nombre, p?.sector) + `<div class="yo-t"><b>${esc(SES.nombre)}</b><button class="link" data-yo="cambiar">Cambiar usuario</button></div>`;
+  } else {
+    b.innerHTML = '<button class="primary" data-yo="vincular" style="width:100%">Entrar con mi PIN</button>';
+  }
+}
+
+/* ---- Bienvenida: elegir nombre + PIN ---- */
+function abrirBienvenida(nota){
+  ovNombre = ''; $('ov').hidden = false;
+  $('ovNota').textContent = nota || 'Elegí tu nombre. Esta PC va a quedar vinculada a vos y no vas a tener que elegirlo de nuevo.';
+  $('ovCancelar').hidden = !SES; $('ovSoloVer').hidden = !!SES;
+  pintarBienvenida();
+}
+function cerrarBienvenida(){ $('ov').hidden = true; }
+function pintarBienvenida(){
+  if($('ov').hidden) return;
+  $('ovPaso1').hidden = !!ovNombre; $('ovPaso2').hidden = !ovNombre;
+  if(!ovNombre){
+    if(DATA) $('ovNames').innerHTML = DATA.equipo.map(p =>
+      `<button class="ov-name" data-n="${esc(p.nombre)}">${avatar(p.nombre, p.sector)}<span><b>${esc(p.nombre)}</b><small>${esc(p.sector)}</small></span></button>`).join('');
+  } else {
+    const p = DATA?.equipo.find(x => x.nombre === ovNombre);
+    $('ovWho').innerHTML = avatar(ovNombre, p?.sector) + `<div><b>${esc(ovNombre)}</b><span style="color:var(--muted);font-size:13px">${esc(p?.sector || '')}</span></div>`;
+  }
+}
+function descripcionPC(){
+  const u = navigator.userAgent;
+  const so = /Windows/.test(u) ? 'Windows' : /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iPhone/iPad' : /Mac/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : 'Otro';
+  const nav = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox/.test(u) ? 'Firefox' : /Chrome/.test(u) ? 'Chrome' : /Safari/.test(u) ? 'Safari' : 'Navegador';
+  return so + ' · ' + nav;
+}
+async function vincular(){
+  const pin = $('ovPin').value.trim(), err = t => $('ovErr').textContent = t;
+  if(!/^\d{4,6}$/.test(pin)){ err('El PIN son 4 números.'); $('ovPin').focus(); return; }
+  const b = $('ovEntrar'); b.disabled = true; b.textContent = 'Verificando…'; err('');
+  try{
+    const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({accion:'vincular', nombre: ovNombre, pin, dispositivo: descripcionPC(), tokenAnterior: SES?.token || ''})});
+    const j = await leerJSON(r);
+    guardarSesion({token: j.token, nombre: j.nombre});
+    soloVer = false; avisosVistos = null; DATA = j; guardarCache(j);
+    cerrarBienvenida(); $('ovPin').value = ''; pintar();
+    toast('¡Listo, ' + j.nombre.split(' ')[0] + '!', 'Esta PC quedó vinculada a vos.');
+    try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(e){}
+  }catch(e){ err(e.message); $('ovPin').select(); }
+  finally{ b.disabled = false; b.textContent = 'Entrar'; }
+}
 function miSector(){ return DATA?.equipo.find(p => p.nombre === yo())?.sector || ''; }
 function esParaMi(a){
   const n = yo(); if(!n || a.de === n) return false;
@@ -299,7 +423,7 @@ function cuando(iso){
 
 function pintarAvisos(){
   const n = yo();
-  $('avDe').textContent = n ? 'De: ' + n : 'Elegí tu nombre arriba para mandar avisos';
+  $('avDe').textContent = n ? 'De: ' + n : 'Entrá con tu PIN para mandar avisos';
   const paraSel = $('avPara').value;
   const sectores = [...new Set(DATA.equipo.map(p => p.sector))].sort();
   $('avPara').innerHTML = '<option value="">¿Para quién?</option>' +
@@ -333,7 +457,7 @@ function pintarAvisos(){
         ${mio && a.estado === 'Pendiente' ? '<button data-act="Visto">Lo vi</button>' : ''}
         ${puedeCerrar ? `<button data-act="Hecho">${a.de === n && !mio ? 'Cerrar' : 'Hecho'}</button>` : ''}
       </div></div>`;
-  }).join('') : `<div class="av-empty">${filtroAvisos === 'mios' ? (n ? 'No tenés avisos pendientes.' : 'Elegí tu nombre para ver tus avisos.') : 'No hay avisos abiertos.'}</div>`;
+  }).join('') : `<div class="av-empty">${filtroAvisos === 'mios' ? (n ? 'No tenés avisos pendientes.' : 'Entrá con tu PIN para ver tus avisos.') : 'No hay avisos abiertos.'}</div>`;
 
   avisarNuevos(mios);
 }
@@ -368,7 +492,7 @@ function abrirFormAviso(abrir){
 async function enviarAviso(){
   const de = yo(), para = $('avPara').value, mensaje = $('avMsg').value.trim();
   const err = t => { $('avErr').textContent = t; };
-  if(!de){ err('Elegí tu nombre arriba primero.'); $('selNombre').focus(); return; }
+  if(!de){ abrirBienvenida(); return; }
   if(!para){ err('Elegí para quién es el aviso.'); $('avPara').focus(); return; }
   if(!mensaje){ err('Escribí el mensaje.'); $('avMsg').focus(); return; }
   // Se muestra al instante y se guarda en segundo plano
@@ -390,7 +514,7 @@ async function enviarAviso(){
 }
 
 async function estadoAviso(id, estado, btn){
-  if(!yo()){ toast('Falta tu nombre', 'Elegí tu nombre arriba para marcar avisos.'); return; }
+  if(!yo()){ abrirBienvenida(); return; }
   const antes = DATA.avisos;
   DATA.avisos = estado === 'Hecho'
     ? antes.filter(a => a.id !== id)
@@ -415,15 +539,15 @@ function setModo(v){
 }
 
 function precargar(){
-  const n = $('selNombre').value, p = DATA?.equipo.find(x => x.nombre === n);
+  const n = yo(), p = DATA?.equipo.find(x => x.nombre === n);
   if(p && p.modalidad) setModo(p.modalidad);
 }
 
 function msg(t, tipo){ const m=$('msg'); m.textContent=t; m.className='msg '+(tipo||''); }
 
 async function enviar(){
-  const nombre = $('selNombre').value, estado = $('txtEstado').value.trim();
-  if(!nombre){ msg('Elegí tu nombre primero.','err'); $('selNombre').focus(); return; }
+  const nombre = yo(), estado = $('txtEstado').value.trim();
+  if(!nombre){ abrirBienvenida(); return; }
   if(!estado){ msg('Escribí en qué estás trabajando.','err'); $('txtEstado').focus(); return; }
   // Se actualiza la tarjeta al instante y se guarda en segundo plano
   const antes = {equipo: DATA.equipo, bitacora: DATA.bitacora}, ahora = new Date().toISOString();
@@ -447,11 +571,17 @@ $('btnEnviar').onclick = enviar;
 $('btnRefresh').onclick = () => cargar();
 $('txtEstado').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); enviar(); } });
 $('txtEstado').addEventListener('input', () => msg(''));
-$('selNombre').onchange = e => {
-  store('tablero_nombre', e.target.value); msg(''); precargar();
-  avisosVistos = null; if(DATA) pintarAvisos();
-  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(err){}
+$('yoBox').onclick = e => {
+  const b = e.target.closest('[data-yo]'); if(!b) return;
+  abrirBienvenida(b.dataset.yo === 'cambiar' ? 'Para cambiar de usuario, elegí el nombre y poné el PIN de esa persona.' : '');
 };
+$('ovNames').onclick = e => { const b = e.target.closest('.ov-name'); if(!b) return; ovNombre = b.dataset.n; $('ovErr').textContent = ''; pintarBienvenida(); $('ovPin').value = ''; $('ovPin').focus(); };
+$('ovVolver').onclick = () => { ovNombre = ''; pintarBienvenida(); };
+$('ovEntrar').onclick = vincular;
+$('ovPin').addEventListener('keydown', e => { if(e.key === 'Enter') vincular(); });
+$('ovPin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,''); $('ovErr').textContent = ''; });
+$('ovCancelar').onclick = cerrarBienvenida;
+$('ovSoloVer').onclick = () => { soloVer = true; cerrarBienvenida(); };
 $('btnNuevoAviso').onclick = () => abrirFormAviso($('avForm').hidden);
 $('avCancelar').onclick = () => abrirFormAviso(false);
 $('avEnviar').onclick = enviarAviso;
@@ -479,6 +609,7 @@ $('fecha').textContent = (f => f.charAt(0).toUpperCase() + f.slice(1))(new Date(
 const cache = leerCache();
 if(cache){ DATA = cache; pintar(); $('sync').textContent = 'Sincronizando…'; }
 cargar(!!cache);
+if(!SES) abrirBienvenida();
 setInterval(() => { if(!document.hidden) cargar(true); }, 60000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) cargar(true); });
 </script>
