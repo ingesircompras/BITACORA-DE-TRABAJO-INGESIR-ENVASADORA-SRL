@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,7 +8,7 @@
 <meta name="theme-color" content="#2f5fd0">
 <script>
   /* ⬇⬇ PEGÁ ACÁ LA URL DE TU APLICACIÓN WEB DE APPS SCRIPT (termina en /exec) ⬇⬇ */
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzC-GVsBp5sT26wrrOCFOm7NiFilFuf7mo327QG1_RGpJljwrn8XtYhUCx6pkKOp67v/exec';
+  const API_URL = 'PEGAR_AQUI_LA_URL_DE_APPS_SCRIPT/exec';
 </script>
 <style>
   :root{
@@ -18,6 +19,7 @@
     --warn:#9a6200; --warn-bg:#fdf2dc;
     --danger:#b3261e;
     --radius:12px;
+    --note-bg:#fff7d6; --note-line:#f0dc94; --note-text:#3d3200; --note-muted:#7a6a2c; --note-mine:#e0a800;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -27,11 +29,15 @@
       --pres:#8fdcb0; --pres-bg:#1d3a2b;
       --warn:#f3c56b; --warn-bg:#3d3017;
       --danger:#ff8a80;
+      --note-bg:#39321a; --note-line:#6b5a1f; --note-text:#f6e7b4; --note-muted:#c9b77a; --note-mine:#f3c56b;
     }
   }
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
   body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .wrap{max-width:1440px;margin:0 auto;padding:16px}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+  @media (max-width:1100px){ .layout{grid-template-columns:minmax(0,1fr)} .layout aside{order:-1} }
   header{display:flex;align-items:center;gap:12px;margin:4px 0 16px}
   header h1{font-size:20px;font-weight:600;margin:0;flex:1}
   .sync{font-size:12px;color:var(--muted)}
@@ -73,6 +79,8 @@
   .estado{font-size:15px;white-space:pre-wrap;word-break:break-word}
   .estado.vacio{color:var(--muted);font-style:italic}
   .when{font-size:12px;color:var(--muted)}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+  .mini{font-size:12px;padding:3px 9px;white-space:nowrap;flex-shrink:0}
   .when.warn{color:var(--warn);background:var(--warn-bg);padding:2px 8px;border-radius:6px;align-self:flex-start}
 
   h2{font-size:15px;font-weight:600;margin:26px 0 8px;display:flex;align-items:center;gap:10px}
@@ -86,6 +94,32 @@
   @media (max-width:560px){ .row{grid-template-columns:48px 1fr} .row .e{grid-column:2} }
   .empty{padding:18px 14px;color:var(--muted);font-size:14px}
   .loading{padding:40px;text-align:center;color:var(--muted)}
+
+  /* ---- Avisos ---- */
+  aside{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:4px}
+  @media (max-width:1100px){ aside{position:static;max-height:none} }
+  .av-head{display:flex;align-items:center;gap:8px}
+  .av-head h3{margin:0;font-size:15px;font-weight:600;flex:1;display:flex;align-items:center;gap:8px}
+  .badge{background:var(--danger);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+  .av-tabs{display:flex;gap:6px}
+  .av-form{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px}
+  .av-form .de{font-size:12px;color:var(--muted)}
+  .av-form .acts{display:flex;gap:8px;justify-content:flex-end}
+  .note{background:var(--note-bg);color:var(--note-text);border:1px solid var(--note-line);border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;transform:rotate(var(--rot,0deg))}
+  .note.mine{border:2px solid var(--note-mine)}
+  .note .nh{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--note-muted)}
+  .note .nh b{color:var(--note-text);font-weight:600}
+  .note .nm{font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+  .note .nf{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--note-muted)}
+  .note .nf .sp{flex:1}
+  .note button{font-size:12px;padding:4px 10px;background:transparent;border-color:var(--note-line);color:var(--note-text)}
+  .note button:hover{border-color:var(--note-text)}
+  .tag-mine{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--note-mine);color:#2b2200;border-radius:4px;padding:1px 6px}
+  .av-empty{font-size:13px;color:var(--muted);padding:14px;border:1px dashed var(--line);border-radius:var(--radius);text-align:center}
+
+  .toast{position:fixed;right:18px;bottom:18px;max-width:340px;background:var(--note-bg);color:var(--note-text);border:2px solid var(--note-mine);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:50;cursor:pointer;animation:entra .25s ease-out}
+  .toast small{display:block;color:var(--note-muted);margin-bottom:2px}
+  @keyframes entra{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -96,6 +130,8 @@
     <button id="btnRefresh" title="Actualizar datos">↻</button>
   </header>
 
+  <div class="layout">
+  <main>
   <section class="panel">
     <div class="form">
       <select id="selNombre" aria-label="Tu nombre"><option value="">¿Quién sos?</option></select>
@@ -112,18 +148,40 @@
   <div class="filters" id="filtros"></div>
   <div class="grid" id="grid"><div class="loading">Cargando…</div></div>
 
-  <h2>Bitácora de hoy
+  <h2 id="hLog">Bitácora de hoy
     <select id="selLogPersona"><option value="">Todos</option></select>
   </h2>
   <div class="log" id="log"></div>
+  </main>
+
+  <aside id="avisos">
+    <div class="av-head">
+      <h3>Avisos <span class="badge" id="avBadge" hidden></span></h3>
+      <button id="btnNuevoAviso">+ Nuevo aviso</button>
+    </div>
+    <div class="av-form" id="avForm" hidden>
+      <span class="de" id="avDe"></span>
+      <select id="avPara" aria-label="Para quién"></select>
+      <textarea id="avMsg" rows="3" maxlength="500" placeholder="Ej: Fijate lo de comprar los trafos en Indunor"></textarea>
+      <div class="msg err" id="avErr" style="margin:0;min-height:0"></div>
+      <div class="acts"><button id="avCancelar">Cancelar</button><button class="primary" id="avEnviar">Enviar aviso</button></div>
+    </div>
+    <div class="av-tabs" id="avTabs">
+      <button class="chip on" data-f="mios">Para mí</button>
+      <button class="chip" data-f="todos">Todos</button>
+    </div>
+    <div id="avLista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </aside>
+  </div>
 </div>
+<div id="toastBox"></div>
 
 <script>
 const COLORES = [
   ['#e7eefc','#2f5fd0'],['#e4f4ea','#1f7a4d'],['#fdeee6','#b4471c'],['#efeafc','#6a4bc4'],
   ['#fbe8f0','#a3305f'],['#e2f4f6','#0f6f7c'],['#fdf2dc','#8a5a00'],['#eef0f3','#4a5260']
 ];
-let DATA = null, filtroSector = '', modo = 'Presencial';
+let DATA = null, filtroSector = '', modo = 'Presencial', filtroAvisos = 'mios', avisosVistos = null;
 const $ = id => document.getElementById(id);
 
 function store(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
@@ -140,6 +198,13 @@ function hace(iso){
   const horas = min / 60;
   const txt = min < 1 ? 'Recién' : min < 60 ? `Hace ${min} min` : `Hace ${Math.floor(horas)} h ${min%60 ? (min%60)+' min' : ''}`;
   return {txt: txt.trim() + ' · ' + hhmm(d), warn: horas >= (DATA?.horasAlerta || 3)};
+}
+
+async function post(body){
+  const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error);
+  return j;
 }
 
 async function cargar(silencioso){
@@ -181,12 +246,117 @@ function pintar(){
         <div class="who"><b>${esc(p.nombre)}</b><div class="sub"><span>${esc(p.sector)}</span>${p.modalidad ? `<span class="pill ${esc(p.modalidad)}">${esc(p.modalidad)}</span>` : ''}</div></div>
       </div>
       <div class="estado ${p.estado?'':'vacio'}">${p.estado ? esc(p.estado) : 'Sin estado cargado'}</div>
-      <div class="when ${h.warn?'warn':''}">${esc(h.txt)}</div>
+      <div class="foot"><div class="when ${h.warn?'warn':''}">${esc(h.txt)}</div>${p.nombre !== $('selNombre').value ? '<button class="mini" data-aviso title="Dejarle un aviso">+ Aviso</button>' : ''}</div>
     </div>`;
   }).join('') || '<div class="empty">No hay personas en este sector.</div>';
 
   pintarLog();
+  pintarAvisos();
   if(!$('txtEstado').value) precargar();
+}
+
+/* ---------------- Avisos ---------------- */
+function yo(){ return $('selNombre').value; }
+function miSector(){ return DATA?.equipo.find(p => p.nombre === yo())?.sector || ''; }
+function esParaMi(a){
+  const n = yo(); if(!n || a.de === n) return false;
+  return a.para === n || a.para === 'Todos' || a.para === 'Sector: ' + miSector();
+}
+function paraTexto(a){ return a.para === 'Todos' ? 'Todos' : a.para; }
+function cuando(iso){
+  if(!iso) return '';
+  const d = new Date(iso), now = new Date(), min = Math.round((now - d)/60000);
+  if(mismoDia(d, now)) return min < 1 ? 'recién' : min < 60 ? `hace ${min} min` : hhmm(d);
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) + ' ' + hhmm(d);
+}
+
+function pintarAvisos(){
+  const n = yo();
+  $('avDe').textContent = n ? 'De: ' + n : 'Elegí tu nombre arriba para mandar avisos';
+  const paraSel = $('avPara').value;
+  const sectores = [...new Set(DATA.equipo.map(p => p.sector))].sort();
+  $('avPara').innerHTML = '<option value="">¿Para quién?</option>' +
+    '<optgroup label="Personas">' + DATA.equipo.filter(p => p.nombre !== n).map(p => `<option>${esc(p.nombre)}</option>`).join('') + '</optgroup>' +
+    '<optgroup label="Grupos"><option value="Todos">Todos</option>' + sectores.map(s => `<option value="Sector: ${esc(s)}">Sector: ${esc(s)}</option>`).join('') + '</optgroup>';
+  $('avPara').value = paraSel;
+
+  const todos = DATA.avisos || [];
+  const mios = todos.filter(esParaMi);
+  const pendientes = mios.filter(a => a.estado === 'Pendiente').length;
+  $('avBadge').hidden = !pendientes; $('avBadge').textContent = pendientes;
+  document.title = (pendientes ? `(${pendientes}) ` : '') + DATA.titulo;
+
+  document.querySelectorAll('#avTabs .chip').forEach(b => {
+    b.classList.toggle('on', b.dataset.f === filtroAvisos);
+    if(b.dataset.f === 'mios') b.textContent = 'Para mí' + (mios.length ? ` (${mios.length})` : '');
+    if(b.dataset.f === 'todos') b.textContent = 'Todos' + (todos.length ? ` (${todos.length})` : '');
+  });
+
+  let lista = filtroAvisos === 'mios' ? todos.filter(a => esParaMi(a) || a.de === n) : todos;
+  lista = lista.slice().sort((a,b) => (esParaMi(b) - esParaMi(a)) || (b.fecha > a.fecha ? 1 : -1));
+
+  $('avLista').innerHTML = lista.length ? lista.map((a,i) => {
+    const mio = esParaMi(a), puedeCerrar = mio || a.de === n;
+    const est = a.estado === 'Visto' ? `Visto por ${esc(a.vistoPor)} ${cuando(a.fechaVisto)}` : 'Pendiente';
+    return `<div class="note ${mio?'mine':''}" style="--rot:${[-0.6,0.5,-0.3,0.4][i%4]}deg" data-id="${esc(a.id)}">
+      <div class="nh"><span><b>${esc(a.de)}</b> → <b>${esc(paraTexto(a))}</b></span><span>${cuando(a.fecha)}</span></div>
+      <div class="nm">${esc(a.mensaje)}</div>
+      <div class="nf">${mio ? '<span class="tag-mine">Para vos</span>' : ''}<span>${est}</span><span class="sp"></span>
+        ${mio && a.estado === 'Pendiente' ? '<button data-act="Visto">Lo vi</button>' : ''}
+        ${puedeCerrar ? `<button data-act="Hecho">${a.de === n && !mio ? 'Cerrar' : 'Hecho'}</button>` : ''}
+      </div></div>`;
+  }).join('') : `<div class="av-empty">${filtroAvisos === 'mios' ? (n ? 'No tenés avisos pendientes.' : 'Elegí tu nombre para ver tus avisos.') : 'No hay avisos abiertos.'}</div>`;
+
+  avisarNuevos(mios);
+}
+
+function avisarNuevos(mios){
+  const ids = new Set(mios.map(a => a.id));
+  if(avisosVistos === null){
+    const pend = mios.filter(a => a.estado === 'Pendiente');
+    if(pend.length) toast(pend.length === 1 ? `${pend[0].de} te dejó un aviso` : `Tenés ${pend.length} avisos pendientes`, pend.length === 1 ? pend[0].mensaje : 'Revisalos en el panel de avisos');
+  } else {
+    mios.filter(a => !avisosVistos.has(a.id) && a.estado === 'Pendiente').forEach(a => {
+      toast(`${a.de} te dejó un aviso`, a.mensaje);
+      try{ if('Notification' in window && Notification.permission === 'granted') new Notification('Aviso de ' + a.de, {body: a.mensaje}); }catch(e){}
+    });
+  }
+  avisosVistos = ids;
+}
+
+function toast(titulo, texto){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.innerHTML = `<small>${esc(titulo)}</small>${esc(texto)}`;
+  t.onclick = () => { t.remove(); filtroAvisos = 'mios'; pintarAvisos(); $('avisos').scrollIntoView({behavior:'smooth'}); };
+  $('toastBox').innerHTML = ''; $('toastBox').appendChild(t);
+  setTimeout(() => t.remove(), 12000);
+}
+
+function abrirFormAviso(abrir){
+  $('avForm').hidden = !abrir; $('avErr').textContent = '';
+  if(abrir) $('avMsg').focus();
+}
+
+async function enviarAviso(){
+  const de = yo(), para = $('avPara').value, mensaje = $('avMsg').value.trim();
+  const err = t => { $('avErr').textContent = t; };
+  if(!de){ err('Elegí tu nombre arriba primero.'); $('selNombre').focus(); return; }
+  if(!para){ err('Elegí para quién es el aviso.'); $('avPara').focus(); return; }
+  if(!mensaje){ err('Escribí el mensaje.'); $('avMsg').focus(); return; }
+  const b = $('avEnviar'); b.disabled = true; b.textContent = 'Enviando…'; err('');
+  try{
+    DATA = await post({accion:'aviso', de, para, mensaje});
+    $('avMsg').value = ''; $('avPara').value = ''; abrirFormAviso(false);
+    filtroAvisos = 'mios'; pintar();
+  }catch(e){ err('No se pudo enviar: ' + e.message); }
+  finally{ b.disabled = false; b.textContent = 'Enviar aviso'; }
+}
+
+async function estadoAviso(id, estado, btn){
+  if(!yo()){ toast('Falta tu nombre', 'Elegí tu nombre arriba para marcar avisos.'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  try{ DATA = await post({accion:'avisoEstado', id, estado, quien: yo()}); pintar(); }
+  catch(e){ btn.disabled = false; btn.textContent = estado === 'Hecho' ? 'Hecho' : 'Lo vi'; toast('No se pudo guardar', e.message); }
 }
 
 function pintarLog(){
@@ -215,11 +385,7 @@ async function enviar(){
   if(!estado){ msg('Escribí en qué estás trabajando.','err'); $('txtEstado').focus(); return; }
   const b = $('btnEnviar'); b.disabled = true; b.textContent = 'Guardando…'; msg('');
   try{
-    const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({accion:'actualizar', nombre, modalidad:modo, estado})});
-    const j = await r.json();
-    if(!j.ok) throw new Error(j.error);
-    DATA = j; $('txtEstado').value = ''; pintar();
+    DATA = await post({accion:'actualizar', nombre, modalidad:modo, estado}); $('txtEstado').value = ''; pintar();
     msg('Listo, estado actualizado.','ok'); setTimeout(()=>msg(''), 3000);
     $('sync').textContent = 'Actualizado ' + hhmm(new Date());
   }catch(e){ msg('No se pudo guardar: ' + e.message, 'err'); }
@@ -231,14 +397,32 @@ $('btnEnviar').onclick = enviar;
 $('btnRefresh').onclick = () => cargar();
 $('txtEstado').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); enviar(); } });
 $('txtEstado').addEventListener('input', () => msg(''));
-$('selNombre').onchange = e => { store('tablero_nombre', e.target.value); msg(''); precargar(); };
+$('selNombre').onchange = e => {
+  store('tablero_nombre', e.target.value); msg(''); precargar();
+  avisosVistos = null; if(DATA) pintarAvisos();
+  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(err){}
+};
+$('btnNuevoAviso').onclick = () => abrirFormAviso($('avForm').hidden);
+$('avCancelar').onclick = () => abrirFormAviso(false);
+$('avEnviar').onclick = enviarAviso;
+$('avMsg').addEventListener('input', () => $('avErr').textContent = '');
+$('avPara').addEventListener('change', () => $('avErr').textContent = '');
+$('avTabs').onclick = e => { const b = e.target.closest('.chip'); if(b){ filtroAvisos = b.dataset.f; pintarAvisos(); } };
+$('avLista').onclick = e => {
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  estadoAviso(b.closest('.note').dataset.id, b.dataset.act, b);
+};
 $('selLogPersona').onchange = pintarLog;
 $('segModo').onclick = e => { if(e.target.dataset.v) setModo(e.target.dataset.v); };
 $('filtros').onclick = e => { const s = e.target.closest('.chip'); if(s){ filtroSector = s.dataset.s; pintar(); } };
 $('grid').onclick = e => {
   const c = e.target.closest('.card'); if(!c) return;
+  if(e.target.closest('[data-aviso]')){
+    abrirFormAviso(true); $('avPara').value = c.dataset.n;
+    $('avisos').scrollIntoView({behavior:'smooth', block:'nearest'}); $('avMsg').focus(); return;
+  }
   $('selLogPersona').value = c.dataset.n; pintarLog();
-  document.querySelector('h2').scrollIntoView({behavior:'smooth'});
+  $('hLog').scrollIntoView({behavior:'smooth'});
 };
 
 cargar();
