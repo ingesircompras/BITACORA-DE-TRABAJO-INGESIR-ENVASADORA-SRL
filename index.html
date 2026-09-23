@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero del equipo</title>
+<meta name="theme-color" content="#2f5fd0">
+<script>
+  /* ⬇⬇ PEGÁ ACÁ LA URL DE TU APLICACIÓN WEB DE APPS SCRIPT (termina en /exec) ⬇⬇ */
+  const API_URL = 'PEGAR_AQUI_LA_URL_DE_APPS_SCRIPT/exec';
+</script>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#fff; --text:#1d1f23; --muted:#6b7079; --line:#e3e5e9;
+    --accent:#2f5fd0; --accent-bg:#e7eefc;
+    --remoto:#6a4bc4; --remoto-bg:#efeafc;
+    --pres:#1f7a4d; --pres-bg:#e4f4ea;
+    --warn:#9a6200; --warn-bg:#fdf2dc;
+    --danger:#b3261e;
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#15171b; --card:#1f2228; --text:#eceef1; --muted:#9aa0aa; --line:#2e323a;
+      --accent:#8fb0ff; --accent-bg:#233054;
+      --remoto:#c4b2ff; --remoto-bg:#302650;
+      --pres:#8fdcb0; --pres-bg:#1d3a2b;
+      --warn:#f3c56b; --warn-bg:#3d3017;
+      --danger:#ff8a80;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;gap:12px;margin:4px 0 16px}
+  header h1{font-size:20px;font-weight:600;margin:0;flex:1}
+  .sync{font-size:12px;color:var(--muted)}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px}
+  button:hover{border-color:var(--muted)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  @media (prefers-color-scheme: dark){ button.primary{color:#10162a} }
+  button:disabled{opacity:.6;cursor:wait}
+  select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+  textarea{resize:vertical;min-height:44px}
+  select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:18px}
+  .form{display:grid;grid-template-columns:190px 200px 1fr auto;gap:10px;align-items:start}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;border:0;border-radius:0;padding:8px 6px;background:transparent}
+  .seg button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+  .msg{font-size:13px;margin-top:8px;min-height:18px}
+  .msg.err{color:var(--danger)} .msg.ok{color:var(--pres)}
+  @media (max-width:760px){ .form{grid-template-columns:1fr 1fr} .form textarea,.form .send{grid-column:1/-1} }
+
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{font-size:13px;padding:5px 12px;border-radius:999px}
+  .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px;cursor:pointer}
+  .card:hover{border-color:var(--muted)}
+  .card.stale{border-color:var(--warn)}
+  .top{display:flex;gap:10px;align-items:flex-start}
+  .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0}
+  .who{flex:1;min-width:0}
+  .who b{display:block;line-height:1.25;overflow-wrap:break-word}
+  .who .sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .who span{font-size:12px;color:var(--muted)}
+  .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .pill.Remoto{background:var(--remoto-bg);color:var(--remoto)}
+  .pill.Presencial{background:var(--pres-bg);color:var(--pres)}
+  .estado{font-size:15px;white-space:pre-wrap;word-break:break-word}
+  .estado.vacio{color:var(--muted);font-style:italic}
+  .when{font-size:12px;color:var(--muted)}
+  .when.warn{color:var(--warn);background:var(--warn-bg);padding:2px 8px;border-radius:6px;align-self:flex-start}
+
+  h2{font-size:15px;font-weight:600;margin:26px 0 8px;display:flex;align-items:center;gap:10px}
+  h2 select{width:auto;font-size:13px;padding:4px 8px;font-weight:400}
+  .log{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .row{display:grid;grid-template-columns:54px 150px 1fr;gap:10px;padding:9px 14px;border-top:1px solid var(--line);font-size:14px}
+  .row:first-child{border-top:0}
+  .row .h{color:var(--muted);font-variant-numeric:tabular-nums}
+  .row .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .e{word-break:break-word}
+  @media (max-width:560px){ .row{grid-template-columns:48px 1fr} .row .e{grid-column:2} }
+  .empty{padding:18px 14px;color:var(--muted);font-size:14px}
+  .loading{padding:40px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="titulo">Tablero del equipo</h1>
+    <span class="sync" id="sync"></span>
+    <button id="btnRefresh" title="Actualizar datos">↻</button>
+  </header>
+
+  <section class="panel">
+    <div class="form">
+      <select id="selNombre" aria-label="Tu nombre"><option value="">¿Quién sos?</option></select>
+      <div class="seg" id="segModo">
+        <button type="button" data-v="Presencial" class="on">Presencial</button>
+        <button type="button" data-v="Remoto">Remoto</button>
+      </div>
+      <textarea id="txtEstado" rows="1" maxlength="500" placeholder="Estoy con… (ej: cotizando a Juan Perez)"></textarea>
+      <button class="primary send" id="btnEnviar">Actualizar</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <div class="filters" id="filtros"></div>
+  <div class="grid" id="grid"><div class="loading">Cargando…</div></div>
+
+  <h2>Bitácora de hoy
+    <select id="selLogPersona"><option value="">Todos</option></select>
+  </h2>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+const COLORES = [
+  ['#e7eefc','#2f5fd0'],['#e4f4ea','#1f7a4d'],['#fdeee6','#b4471c'],['#efeafc','#6a4bc4'],
+  ['#fbe8f0','#a3305f'],['#e2f4f6','#0f6f7c'],['#fdf2dc','#8a5a00'],['#eef0f3','#4a5260']
+];
+let DATA = null, filtroSector = '', modo = 'Presencial';
+const $ = id => document.getElementById(id);
+
+function store(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function iniciales(n){ return n.trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase(); }
+function colorSector(s){ let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))>>>0; return COLORES[h % COLORES.length]; }
+function hhmm(d){ return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+function mismoDia(a,b){ return a.toDateString() === b.toDateString(); }
+
+function hace(iso){
+  if(!iso) return {txt:'Todavía no cargó nada', warn:true};
+  const d = new Date(iso), now = new Date(), min = Math.round((now - d)/60000);
+  if(!mismoDia(d, now)) return {txt:'Sin actualizar hoy · último ' + d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) + ' ' + hhmm(d), warn:true};
+  const horas = min / 60;
+  const txt = min < 1 ? 'Recién' : min < 60 ? `Hace ${min} min` : `Hace ${Math.floor(horas)} h ${min%60 ? (min%60)+' min' : ''}`;
+  return {txt: txt.trim() + ' · ' + hhmm(d), warn: horas >= (DATA?.horasAlerta || 3)};
+}
+
+async function cargar(silencioso){
+  if(!silencioso) $('sync').textContent = 'Sincronizando…';
+  try{
+    const r = await fetch(API_URL + '?t=' + Date.now());
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error);
+    DATA = j; pintar();
+    $('sync').textContent = 'Actualizado ' + hhmm(new Date());
+  }catch(e){
+    $('sync').textContent = 'Sin conexión';
+    if(!DATA) $('grid').innerHTML = `<div class="loading">No se pudo conectar con la planilla.<br><small>${esc(e.message)}</small></div>`;
+  }
+}
+
+function pintar(){
+  document.title = DATA.titulo; $('titulo').textContent = DATA.titulo;
+
+  const sel = $('selNombre'), guardado = sel.value || store('tablero_nombre') || '';
+  sel.innerHTML = '<option value="">¿Quién sos?</option>' +
+    DATA.equipo.map(p => `<option ${p.nombre===guardado?'selected':''}>${esc(p.nombre)}</option>`).join('');
+  const selLog = $('selLogPersona'), logSel = selLog.value;
+  selLog.innerHTML = '<option value="">Todos</option>' +
+    DATA.equipo.map(p => `<option ${p.nombre===logSel?'selected':''}>${esc(p.nombre)}</option>`).join('');
+
+  const sectores = [...new Set(DATA.equipo.map(p => p.sector))].sort();
+  if(filtroSector && !sectores.includes(filtroSector)) filtroSector = '';
+  $('filtros').innerHTML = sectores.length > 1
+    ? ['', ...sectores].map(s => `<button class="chip ${s===filtroSector?'on':''}" data-s="${esc(s)}">${s ? esc(s) : 'Todos'}</button>`).join('')
+    : '';
+
+  const lista = DATA.equipo.filter(p => !filtroSector || p.sector === filtroSector);
+  $('grid').innerHTML = lista.map(p => {
+    const [bg, fg] = colorSector(p.sector), h = hace(p.actualizado);
+    return `<div class="card ${h.warn?'stale':''}" data-n="${esc(p.nombre)}">
+      <div class="top">
+        <div class="av" style="background:${bg};color:${fg}">${esc(iniciales(p.nombre))}</div>
+        <div class="who"><b>${esc(p.nombre)}</b><div class="sub"><span>${esc(p.sector)}</span>${p.modalidad ? `<span class="pill ${esc(p.modalidad)}">${esc(p.modalidad)}</span>` : ''}</div></div>
+      </div>
+      <div class="estado ${p.estado?'':'vacio'}">${p.estado ? esc(p.estado) : 'Sin estado cargado'}</div>
+      <div class="when ${h.warn?'warn':''}">${esc(h.txt)}</div>
+    </div>`;
+  }).join('') || '<div class="empty">No hay personas en este sector.</div>';
+
+  pintarLog();
+  if(!$('txtEstado').value) precargar();
+}
+
+function pintarLog(){
+  const quien = $('selLogPersona').value;
+  const filas = DATA.bitacora.filter(b => !quien || b.nombre === quien);
+  $('log').innerHTML = filas.length
+    ? filas.map(b => `<div class="row"><span class="h">${hhmm(new Date(b.ts))}</span><span class="n">${esc(b.nombre)}</span><span class="e">${esc(b.estado)}</span></div>`).join('')
+    : '<div class="empty">Todavía no hay movimientos hoy.</div>';
+}
+
+function setModo(v){
+  modo = v === 'Remoto' ? 'Remoto' : 'Presencial';
+  document.querySelectorAll('#segModo button').forEach(b => b.classList.toggle('on', b.dataset.v === modo));
+}
+
+function precargar(){
+  const n = $('selNombre').value, p = DATA?.equipo.find(x => x.nombre === n);
+  if(p && p.modalidad) setModo(p.modalidad);
+}
+
+function msg(t, tipo){ const m=$('msg'); m.textContent=t; m.className='msg '+(tipo||''); }
+
+async function enviar(){
+  const nombre = $('selNombre').value, estado = $('txtEstado').value.trim();
+  if(!nombre){ msg('Elegí tu nombre primero.','err'); $('selNombre').focus(); return; }
+  if(!estado){ msg('Escribí en qué estás trabajando.','err'); $('txtEstado').focus(); return; }
+  const b = $('btnEnviar'); b.disabled = true; b.textContent = 'Guardando…'; msg('');
+  try{
+    const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({accion:'actualizar', nombre, modalidad:modo, estado})});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error);
+    DATA = j; $('txtEstado').value = ''; pintar();
+    msg('Listo, estado actualizado.','ok'); setTimeout(()=>msg(''), 3000);
+    $('sync').textContent = 'Actualizado ' + hhmm(new Date());
+  }catch(e){ msg('No se pudo guardar: ' + e.message, 'err'); }
+  finally{ b.disabled = false; b.textContent = 'Actualizar'; }
+}
+
+/* Eventos */
+$('btnEnviar').onclick = enviar;
+$('btnRefresh').onclick = () => cargar();
+$('txtEstado').addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); enviar(); } });
+$('txtEstado').addEventListener('input', () => msg(''));
+$('selNombre').onchange = e => { store('tablero_nombre', e.target.value); msg(''); precargar(); };
+$('selLogPersona').onchange = pintarLog;
+$('segModo').onclick = e => { if(e.target.dataset.v) setModo(e.target.dataset.v); };
+$('filtros').onclick = e => { const s = e.target.closest('.chip'); if(s){ filtroSector = s.dataset.s; pintar(); } };
+$('grid').onclick = e => {
+  const c = e.target.closest('.card'); if(!c) return;
+  $('selLogPersona').value = c.dataset.n; pintarLog();
+  document.querySelector('h2').scrollIntoView({behavior:'smooth'});
+};
+
+cargar();
+setInterval(() => { if(!document.hidden) cargar(true); }, 60000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) cargar(true); });
+</script>
+</body>
+</html>
